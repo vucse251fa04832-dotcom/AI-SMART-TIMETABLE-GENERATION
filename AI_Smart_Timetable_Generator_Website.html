@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI-Based Smart Timetable Generator Using Constraint-Based Planning">
+<title>AI-Based Smart Timetable Generator</title>
+<style>
+:root{
+  --bg:#f7f4ee; --surface:#fffdf9; --ink:#10243e; --muted:#5d6a78;
+  --navy:#102f50; --blue:#2f72b7; --teal:#2c8c88; --purple:#6855a5;
+  --green:#3b8f68; --orange:#c86b3c; --line:#dfe4e8;
+  --shadow:0 16px 45px rgba(16,36,62,.09); --radius:22px;
+}
+[data-theme="dark"]{
+  --bg:#0b1420; --surface:#111e2d; --ink:#eef5fb; --muted:#a9b7c5;
+  --navy:#dcecff; --blue:#69a8e8; --teal:#55c4be; --purple:#aa9be5;
+  --green:#6cc494; --orange:#ef9a6b; --line:#29394b;
+  --shadow:0 18px 50px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.65}
+a{color:inherit;text-decoration:none}
+.container{width:min(1160px,92%);margin:auto}
+nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-inner{height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-weight:850;letter-spacing:-.03em;color:var(--navy)}
+.links{display:flex;gap:18px;align-items:center;font-size:.9rem}
+.links a{color:var(--muted);font-weight:650}
+.links a:hover{color:var(--blue)}
+.theme{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 12px;cursor:pointer}
+.hero{padding:88px 0 70px;position:relative;overflow:hidden}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;filter:blur(3px);opacity:.35;z-index:-1}
+.hero:before{width:360px;height:360px;background:#a8d9d2;right:-140px;top:-90px}
+.hero:after{width:300px;height:300px;background:#c9c0ee;left:-160px;bottom:-120px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:999px;color:var(--teal);font-weight:800;font-size:.78rem}
+.hero-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:55px;align-items:center}
+h1{font-size:clamp(2.7rem,7vw,5.8rem);line-height:.98;letter-spacing:-.065em;margin:20px 0}
+.hero h1 span{color:var(--blue)}
+.hero p{font-size:1.14rem;color:var(--muted);max-width:720px}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:13px;padding:12px 18px;font-weight:800;border:1px solid var(--line);transition:.2s}
+.btn.primary{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+.btn.secondary{background:var(--surface)}
+.btn:hover{transform:translateY(-2px)}
+.hero-card{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:22px;box-shadow:var(--shadow)}
+.calendar{border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.cal-head{background:var(--navy);color:var(--bg);padding:16px;font-weight:850}
+.cal-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.cal-grid div{padding:14px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:.82rem}
+.cal-grid .tag{font-weight:800;color:var(--blue)}
+section{padding:76px 0}
+.section-head{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:30px}
+.kicker{color:var(--orange);font-weight:850;text-transform:uppercase;letter-spacing:.1em;font-size:.76rem}
+h2{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;letter-spacing:-.045em;margin:7px 0}
+.lead{max-width:650px;color:var(--muted)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.card h3{margin-top:0;font-size:1.18rem}
+.card p,.card li{color:var(--muted)}
+.problem{border-left:5px solid var(--orange)}
+.list{padding-left:20px}
+.objectives{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.objective{padding:15px 17px;border:1px solid var(--line);border-radius:15px;background:var(--surface);display:flex;gap:12px}
+.num{min-width:30px;height:30px;border-radius:9px;background:#e5f0fb;color:var(--blue);display:grid;place-items:center;font-weight:900}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}
+.flow-item{position:relative;padding:20px 15px;border:1px solid var(--line);border-radius:18px;background:var(--surface);text-align:center}
+.flow-item:not(:last-child):after{content:"→";position:absolute;right:-16px;top:40%;color:var(--orange);font-size:1.4rem;font-weight:900}
+.icon{font-size:1.8rem;margin-bottom:8px}
+.constraints{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.constraint-card{padding:25px;border-radius:20px;border:1px solid var(--line);background:var(--surface)}
+.constraint-card.hard{border-top:5px solid #d95f5f}
+.constraint-card.soft{border-top:5px solid var(--teal)}
+.timeline{display:grid;gap:13px}
+.step{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:start}
+.step-num{width:44px;height:44px;border-radius:13px;background:var(--navy);color:var(--bg);display:grid;place-items:center;font-weight:900}
+.demo{background:var(--navy);color:#fff;padding:28px;border-radius:28px;box-shadow:var(--shadow)}
+.demo .muted{color:#cbd8e6}
+.demo-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:20px}
+.mock-control{background:#fff;color:#17304d;border-radius:16px;padding:18px;margin-bottom:12px}
+.mock-control label{display:block;font-size:.75rem;font-weight:800;margin-bottom:7px}
+.fake-input{border:1px solid #d6dde5;padding:10px;border-radius:10px;color:#6b7784;font-size:.9rem}
+.fake-btn{background:#2f72b7;color:white;border:0;padding:11px 15px;border-radius:10px;font-weight:800}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:15px;overflow:hidden}
+th,td{padding:11px;border-bottom:1px solid var(--line);font-size:.83rem;text-align:left}
+th{background:color-mix(in srgb,var(--blue) 12%,var(--surface))}
+.tech{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.tech .card{padding:20px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.metric{padding:22px;border:1px solid var(--line);background:var(--surface);border-radius:18px}
+.metric strong{display:block;font-size:1.05rem;margin-bottom:6px}
+.metric span{color:var(--muted);font-size:.86rem}
+.footer{padding:50px 0;border-top:1px solid var(--line)}
+.footer-grid{display:flex;justify-content:space-between;gap:25px;flex-wrap:wrap}
+.small{font-size:.86rem;color:var(--muted)}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#e7f4ee;color:var(--green);font-weight:800;font-size:.73rem}
+@media(max-width:900px){
+ .hero-grid,.grid-2,.demo-grid{grid-template-columns:1fr}
+ .flow{grid-template-columns:1fr 1fr}
+ .flow-item:not(:last-child):after{display:none}
+ .tech{grid-template-columns:1fr 1fr}
+ .metrics{grid-template-columns:1fr 1fr}
+ .links a:nth-child(n+5){display:none}
+}
+@media(max-width:600px){
+ .hero{padding:65px 0 50px}
+ section{padding:55px 0}
+ .links{gap:8px}.links a{display:none}.links a:first-child{display:block}
+ .objectives,.constraints,.flow,.tech,.metrics{grid-template-columns:1fr}
+ .hero h1{font-size:2.75rem}
+ .nav-inner{height:60px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="container nav-inner">
+    <a class="brand" href="#top">Smart Timetable AI</a>
+    <div class="links">
+      <a href="#problem">Problem</a><a href="#idea">AI Method</a><a href="#workflow">Workflow</a>
+      <a href="#demo">Demo</a><a href="#metrics">Metrics</a>
+    </div>
+    <button class="theme" id="themeBtn" aria-label="Toggle dark mode">☾</button>
+  </div>
+</nav>
+
+<main id="top">
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">AI MINI-CAPSTONE · PLANNING AGENT</span>
+      <h1>AI-Based Smart <span>Timetable Generator</span></h1>
+      <p><strong>Automated College Timetable Generation Using Constraint-Based Planning.</strong><br>
+      Define the constraints. Generate a conflict-free and efficient timetable.</p>
+      <div class="btns">
+        <a class="btn primary" href="#demo">Try the Demo</a>
+        <a class="btn secondary" href="#workflow">View Workflow</a>
+      </div>
+    </div>
+    <div class="hero-card" aria-label="Illustrative timetable">
+      <div class="calendar">
+        <div class="cal-head">Generated Timetable · Illustration</div>
+        <div class="cal-grid">
+          <div class="tag">Day</div><div class="tag">Period</div><div class="tag">Class</div>
+          <div>Monday</div><div>P1</div><div>AI · Room 101</div>
+          <div>Monday</div><div>P2</div><div>DBMS · Room 102</div>
+          <div>Tuesday</div><div>P1</div><div>CN · Lab 1</div>
+          <div>Wednesday</div><div>P3</div><div>Maths · Room 101</div>
+        </div>
+      </div>
+      <p class="small">Illustrative UI only. Actual values come from the implemented scheduling data.</p>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+<div class="container">
+  <div class="section-head"><div><div class="kicker">01 · Problem & Motivation</div><h2>Scheduling is a constraint problem.</h2></div></div>
+  <div class="grid-2">
+    <div class="card problem">
+      <h3>Why manual scheduling is difficult</h3>
+      <p>Creating a college timetable manually is complex and time-consuming because faculty availability, subjects, sections, classrooms, working days, periods, and weekly subject requirements must all be coordinated.</p>
+      <p>Manual scheduling can lead to faculty conflicts, classroom conflicts, section conflicts, uneven subject distribution, and assignments outside availability.</p>
+    </div>
+    <div class="card">
+      <h3>What this project does</h3>
+      <p>The proposed system uses AI-based constraint planning to automatically generate a feasible timetable while satisfying the required scheduling constraints.</p>
+      <span class="badge">Feasible scheduling · Constraint-aware</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><div class="kicker">02 · Objectives</div><h2>From requirements to a usable schedule.</h2></div></div>
+  <div class="objectives">
+    <div class="objective"><span class="num">1</span><span>Automatically generate a feasible college timetable using AI.</span></div>
+    <div class="objective"><span class="num">2</span><span>Model timetable generation as a Constraint Satisfaction Problem (CSP).</span></div>
+    <div class="objective"><span class="num">3</span><span>Apply planning/search and backtracking to find a valid timetable.</span></div>
+    <div class="objective"><span class="num">4</span><span>Prevent faculty, classroom, and section conflicts.</span></div>
+    <div class="objective"><span class="num">5</span><span>Consider faculty and classroom availability.</span></div>
+    <div class="objective"><span class="num">6</span><span>Generate section-wise, faculty-wise, and classroom-wise timetables.</span></div>
+    <div class="objective"><span class="num">7</span><span>Evaluate constraint violations, satisfaction, workload distribution, and generation time.</span></div>
+  </div>
+</div>
+</section>
+
+<section id="idea">
+<div class="container">
+  <div class="section-head"><div><div class="kicker">03 · Key Idea</div><h2>Constraint Satisfaction Problem</h2></div></div>
+  <div class="grid-2">
+    <div class="card"><h3>Variables</h3><p>Session assignments that require a subject, faculty, section, day, period, and classroom.</p></div>
+    <div class="card"><h3>Domains</h3><p>Possible combinations of available days, periods, and classrooms.</p></div>
+    <div class="card"><h3>Constraints</h3><p>Hard and soft rules that guide the scheduling search.</p></div>
+    <div class="card"><h3>Search</h3><p>Backtracking and constraint checking explore assignments until a feasible timetable is found.</p></div>
+  </div>
+  <div class="card" style="margin-top:18px;border-left:5px solid var(--teal)">
+    <strong>Key callout:</strong> AI-based constraint planning helps generate feasible schedules while automatically detecting and avoiding major timetable conflicts.
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><div class="kicker">04 · System Architecture</div><h2>Data → constraints → schedule.</h2></div></div>
+  <div class="flow">
+    <div class="flow-item"><div class="icon">📥</div><strong>Input Data</strong><p class="small">Subjects, faculty, sections, rooms, periods, availability</p></div>
+    <div class="flow-item"><div class="icon">⚙️</div><strong>CSP Modeling</strong><p class="small">Variables, domains and constraints</p></div>
+    <div class="flow-item"><div class="icon">🔎</div><strong>AI Search</strong><p class="small">Backtracking with constraint checking</p></div>
+    <div class="flow-item"><div class="icon">✨</div><strong>Schedule</strong><p class="small">Feasible timetable and soft-constraint evaluation</p></div>
+    <div class="flow-item"><div class="icon">📊</div><strong>Validation</strong><p class="small">Conflicts, metrics and timetable views</p></div>
+  </div>
+</div>
+</section>
+
+<section id="workflow">
+<div class="container">
+  <div class="section-head"><div><div class="kicker">05 · End-to-End Workflow</div><h2>Ten steps from input to evaluation.</h2></div></div>
+  <div class="timeline">
+    <div class="step"><div class="step-num">01</div><div><strong>Open the system</strong><p class="small">Start the timetable generation workflow.</p></div></div>
+    <div class="step"><div class="step-num">02</div><div><strong>Provide scheduling data</strong><p class="small">Upload or provide the required scheduling information.</p></div></div>
+    <div class="step"><div class="step-num">03</div><div><strong>Preprocess data</strong><p class="small">Inspect, clean, normalize and validate input fields.</p></div></div>
+    <div class="step"><div class="step-num">04</div><div><strong>Configure the schedule</strong><p class="small">Define days, periods, classrooms and requirements.</p></div></div>
+    <div class="step"><div class="step-num">05</div><div><strong>Create sessions</strong><p class="small">Expand weekly subject requirements into schedulable sessions.</p></div></div>
+    <div class="step"><div class="step-num">06</div><div><strong>Build the CSP</strong><p class="small">Define variables, domains and scheduling constraints.</p></div></div>
+    <div class="step"><div class="step-num">07</div><div><strong>Apply hard constraints</strong><p class="small">Check faculty, room, section and availability conflicts.</p></div></div>
+    <div class="step"><div class="step-num">08</div><div><strong>Run AI search</strong><p class="small">Use search/backtracking to assign valid slots.</p></div></div>
+    <div class="step"><div class="step-num">09</div><div><strong>Evaluate</strong><p class="small">Measure soft constraints and validate the generated timetable.</p></div></div>
+    <div class="step"><div class="step-num">10</div><div><strong>Display outputs</strong><p class="small">Show section-wise, faculty-wise and classroom-wise schedules.</p></div></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><div class="kicker">06 · Constraints</div><h2>Hard rules first. Quality second.</h2></div></div>
+  <div class="constraints">
+    <div class="constraint-card hard">
+      <h3>Hard Constraints · Must Satisfy</h3>
+      <ul class="list">
+        <li>A faculty member cannot teach two classes at the same time.</li>
+        <li>A classroom cannot be used by two classes simultaneously.</li>
+        <li>A section cannot attend two subjects simultaneously.</li>
+        <li>Every subject must receive its required number of classes per week.</li>
+        <li>Faculty and classroom availability must be respected where data exists.</li>
+      </ul>
+    </div>
+    <div class="constraint-card soft">
+      <h3>Soft Constraints · Optimize</h3>
+      <ul class="list">
+        <li>Avoid too many consecutive classes for a faculty member.</li>
+        <li>Distribute subjects across different days.</li>
+        <li>Minimize unnecessary free periods.</li>
+        <li>Avoid excessive consecutive difficult/major subjects where applicable.</li>
+        <li>Balance faculty workload where possible.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="demo">
+<div class="container">
+  <div class="section-head"><div><div class="kicker">07 · Interactive Demo Mockup</div><h2>Prototype interface.</h2></div></div>
+  <div class="demo">
+    <p class="muted">Illustration / Prototype UI — non-functional mockup</p>
+    <div class="demo-grid">
+      <div>
+        <div class="mock-control"><label>DATASET</label><div class="fake-input">Choose CSV / Excel file</div></div>
+        <div class="mock-control"><label>WORKING DAYS</label><div class="fake-input">Monday · Tuesday · Wednesday · Thursday · Friday</div></div>
+        <div class="mock-control"><label>PERIODS</label><div class="fake-input">P1 · P2 · P3 · P4 · P5 · P6</div></div>
+        <div class="mock-control"><label>CLASSROOMS</label><div class="fake-input">Room 101 · Room 102 · Lab 1</div></div>
+        <button class="fake-btn">Generate Timetable</button>
+      </div>
+      <div class="mock-control">
+        <label>GENERATED TIMETABLE · ILLUSTRATION</label>
+        <table>
+          <thead><tr><th>Day</th><th>Period</th><th>Section</th><th>Subject</th><th>Room</th></tr></thead>
+          <tbody>
+            <tr><td>Monday</td><td>P1</td><td>A</td><td>AI</td><td>101</td></tr>
+            <tr><td>Monday</td><td>P2</td><td>A</td><td>DBMS</td><td>102</td></tr>
+            <tr><td>Tuesday</td><td>P1</td><td>A</td><td>CN</td><td>Lab 1</td></tr>
+            <tr><td>Wednesday</td><td>P3</td><td>A</td><td>Maths</td><td>101</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><div class="kicker">08 · Technology Stack</div><h2>Simple, practical, reproducible.</h2></div></div>
+  <div class="tech">
+    <div class="card"><h3>🐍 Python</h3><p>Core implementation and scheduling logic.</p></div>
+    <div class="card"><h3>🧩 CSP</h3><p>Problem model for timetable generation.</p></div>
+    <div class="card"><h3>🔁 Backtracking</h3><p>AI search for valid assignments.</p></div>
+    <div class="card"><h3>📋 Pandas</h3><p>Data loading, preprocessing and export.</p></div>
+    <div class="card"><h3>🔢 NumPy</h3><p>Numerical operations where required.</p></div>
+    <div class="card"><h3>📈 Matplotlib</h3><p>Evaluation graphs and visualizations.</p></div>
+    <div class="card"><h3>🖥️ Streamlit</h3><p>Planned interactive web interface.</p></div>
+    <div class="card"><h3>☁️ Google Colab</h3><p>Development, experimentation and demonstration.</p></div>
+  </div>
+</div>
+</section>
+
+<section id="metrics">
+<div class="container">
+  <div class="section-head"><div><div class="kicker">09 · Evaluation</div><h2>Measure what the scheduler actually does.</h2></div></div>
+  <div class="card" style="margin-bottom:18px">
+    <strong>Evaluation workflow:</strong>
+    <p class="small">Input Scheduling Data → Generate Timetable → Validate Hard Constraints → Detect Conflicts → Evaluate Soft Constraints → Calculate Metrics → Visualize Results</p>
+  </div>
+  <div class="metrics">
+    <div class="metric"><strong>Constraint Violations</strong><span>Number of hard-constraint violations detected.</span></div>
+    <div class="metric"><strong>Faculty Conflicts</strong><span>Checks simultaneous faculty assignments.</span></div>
+    <div class="metric"><strong>Room Conflicts</strong><span>Checks simultaneous classroom assignments.</span></div>
+    <div class="metric"><strong>Section Conflicts</strong><span>Checks simultaneous section assignments.</span></div>
+    <div class="metric"><strong>Constraint Satisfaction %</strong><span>Measures satisfaction of evaluated hard constraints.</span></div>
+    <div class="metric"><strong>Generation Time</strong><span>Measures time required to generate a feasible schedule.</span></div>
+    <div class="metric"><strong>Workload Distribution</strong><span>Measures how sessions are distributed among faculty.</span></div>
+    <div class="metric"><strong>Availability</strong><span>Evaluated only when availability data is actually provided.</span></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><div class="kicker">10 · Applications & Future Scope</div><h2>Designed for real scheduling needs.</h2></div></div>
+  <div class="grid-2">
+    <div class="card"><h3>Applications</h3><ul class="list"><li>College and university timetabling</li><li>School scheduling</li><li>Training and workshop planning</li><li>Resource allocation in organizations</li></ul></div>
+    <div class="card"><h3>Future Scope</h3><ul class="list"><li>Integration with real-time faculty availability</li><li>Multi-campus scheduling</li><li>Advanced optimization techniques</li><li>Interactive editing with conflict checking</li><li>Mobile application for easier access</li></ul></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="card" style="text-align:center;padding:42px">
+    <div class="kicker">11 · Conclusion</div>
+    <h2>Plan smarter. Schedule with constraints.</h2>
+    <p class="lead" style="margin:15px auto">The AI-Based Smart Timetable Generator models college timetable generation as a Constraint Satisfaction Problem and applies AI search/backtracking to find feasible schedules while respecting important scheduling constraints.</p>
+    <p class="lead" style="margin:15px auto">The prototype demonstrates a complete AI workflow: <strong>Input Data → Constraint Modeling → AI Search → Timetable Generation → Validation → Evaluation.</strong></p>
+  </div>
+</div>
+</section>
+</main>
+
+<footer class="footer">
+<div class="container footer-grid">
+  <div><strong>AI-Based Smart Timetable Generator</strong><div class="small">AI Mini-Capstone Project</div></div>
+  <div class="small">Student: [Your Name] · Course/Department: [Your Course] · Institution: [Your Institution]</div>
+  <div class="small"><a href="#" aria-label="GitHub placeholder">GitHub</a> · <a href="#" aria-label="Google Colab placeholder">Google Colab</a></div>
+</div>
+</footer>
+
+<script>
+const btn=document.getElementById('themeBtn');
+const saved=localStorage.getItem('theme');
+if(saved){document.documentElement.dataset.theme=saved;btn.textContent=saved==='dark'?'☀':'☾'}
+btn.addEventListener('click',()=>{
+ const dark=document.documentElement.dataset.theme==='dark';
+ document.documentElement.dataset.theme=dark?'light':'dark';
+ localStorage.setItem('theme',dark?'light':'dark');
+ btn.textContent=dark?'☾':'☀';
+});
+</script>
+</body>
+</html>
